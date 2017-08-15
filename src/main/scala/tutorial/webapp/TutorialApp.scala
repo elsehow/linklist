@@ -2,41 +2,81 @@ package tutorial.webapp
 
 // import scala.scalajs.js.annotation.JSExportTopLevel
 
-class User(username: String) {
-  // require(d != 0)
-  val name: String = username
-  val online: Boolean = false
+case class User(
+  name: String,
+  online: Boolean = false) {
   override def toString = name
 }
 
-class Comment(u: User, s: String) {
-  val poster: User = u
-  val body: String = s
-  override def toString = s"${poster} - ${body}"
+case class Comment(poster: User, body: String) {
+  override def toString = s"[${poster}] ${body}"
   // TODO timestamp required...?
 }
 
 
-class Post(u: User, l: String, t: Option[String]) {
-  val poster: User = u
-  val url: String = l
-  val title: Option[String] = t
-  val comments: List[Comment] = Nil
+case class Post(
+  poster: User,
+  url: String,
+  title: Option[String],
+  var comments: List[Comment] = List()) {
   // TODO timestamp required...?
+  def add (c: Comment): Unit = {
+    comments = comments :+ c
+  }
+  def remove (c: Comment): Unit = {
+    comments = comments.filterNot(comment => comment == c)
+  }
 }
 
-class Room(c: User, n: String) {
-  val creator: User = c
-  val name: String = n
-  val members: Set[User] = Set() // TODO should include only creator
-  val posts: Set[Post] = Set()
-  // TODO add/remove post
-  // TODO add/remove member
+case class Room(
+  creator: User,
+  name: String) {
+  // members should include only creator for now
+  var members: Set[User] = Set(creator)
+  // no posts for now
+  var posts: Set[Post] = Set()
+  // we can add a post or remove a post
+  def addPost (p: Post): Unit = {
+    posts = posts + p
+  }
+  def removePost (p: Post): Unit = {
+    posts = posts - p
+  }
+  // we can also add or remove members
+  def addMember (m: User): Unit = {
+    members = members + m
+  }
+  def removeMember (m: User): Unit = {
+    members = members - m
+  }
 }
 
-class App() {
-  val loggedInAs: Option[User] = None
-  val room: Option[Room] = None
-  // TODO log in
-  // TODO join room
+case class App(
+  var loggedInAs: Option[User] = None,
+  var joinedRooms: Set[Room] = Set(),
+  var currentRoom: Option[Room] = None) {
+  def logInAs (u: User): Unit = {
+    loggedInAs = Some(u)
+  }
+  def logOut (): Unit = {
+    if (loggedInAs == None)
+      throw new Exception("Cannot log out - not logged in!")
+    else
+      loggedInAs = None
+  }
+  def join (r: Room): Unit = {
+    if (loggedInAs == None)
+      throw new Exception("Must be logged in to join rooms")
+    joinedRooms = joinedRooms + r
+    currentRoom = Some(r)
+  }
+  def leave (r: Room): Unit = {
+    if (loggedInAs == None)
+      throw new Exception("Cannot log out - not logged in!")
+    joinedRooms = joinedRooms - r
+    // if you were in the room you just left
+    if (currentRoom == Some(r))
+      // now you're in no room
+      currentRoom = None
+  }
 }

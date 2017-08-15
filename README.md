@@ -4,5 +4,5 @@ work in progress
 
 ```
 sbt
-test
+> test
 ```
