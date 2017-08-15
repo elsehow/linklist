@@ -3,6 +3,13 @@ package tutorial.webapp
 // import scala.scalajs.js.annotation.JSExportTopLevel
 import java.net.URL
 
+trait Readable {
+  var unread: Boolean = true
+  def read (): Unit = {
+    unread = false
+  }
+}
+
 case class User(
   name: String,
   online: Boolean = false
@@ -11,10 +18,10 @@ case class User(
 }
 
 // TODO timestamp required...?
-case class Comment(
+case class Comment (
   poster: User,
-  body: String
-) {
+  body: String,
+) extends Readable {
   override def toString = s"[${poster}] ${body}"
 }
 
@@ -24,7 +31,7 @@ case class Post(
   url: URL,
   title: Option[String],
   var comments: List[Comment] = List()
-) {
+) extends Readable {
   def add (c: Comment): Unit = {
     comments = comments :+ c
   }

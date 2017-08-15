@@ -28,7 +28,13 @@ object TutorialTest extends TestSuite {
       assert(
         c.poster== u,
         c.body == "whats good",
+        c.unread == true,
         c.toString() == "[nick] whats good"
+      )
+      // read the comment
+      c.read()
+      assert(
+        c.unread == false
       )
     }
 
@@ -37,7 +43,13 @@ object TutorialTest extends TestSuite {
         p.poster== u,
         p.url == testUrl,
         p.title == Some("Interesting"),
+        p.unread == true,
         p.comments.isEmpty == true
+      )
+      // read the post
+      p.read()
+      assert(
+        p.unread == false
       )
       // check that comments is empty
       // add a comment, check comments
