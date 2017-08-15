@@ -71,28 +71,35 @@ case class App(
   var currentRoom: Option[Room] = None
 ) {
 
+  private def checkLoggedIn (cb: Unit => Unit) {
+    if (loggedInAs == None)
+      throw new Exception("Must be logged in to do that")
+    else
+      cb()
+  }
+
   def logInAs (u: User): Unit = {
     loggedInAs = Some(u)
   }
+
   def logOut (): Unit = {
-    if (loggedInAs == None)
-      throw new Exception("Cannot log out - not logged in!")
-    else
-      loggedInAs = None
+    checkLoggedIn(_ => {
+                    loggedInAs = None
+                  })
   }
   def join (r: Room): Unit = {
-    if (loggedInAs == None)
-      throw new Exception("Must be logged in to join rooms")
-    joinedRooms = joinedRooms + r
-    currentRoom = Some(r)
+    checkLoggedIn(_ => {
+                    joinedRooms = joinedRooms + r
+                    currentRoom = Some(r)
+                  })
   }
   def leave (r: Room): Unit = {
-    if (loggedInAs == None)
-      throw new Exception("Cannot log out - not logged in!")
-    joinedRooms = joinedRooms - r
-    // if you were in the room you just left
-    if (currentRoom == Some(r))
-      // now you're in no room
-      currentRoom = None
-  }
+    checkLoggedIn(_ => {
+                    joinedRooms = joinedRooms - r
+                    // if you were in the room you just left
+                    if (currentRoom == Some(r))
+                      // now you're in no room
+                      currentRoom = None
+                  })
+    }
 }
