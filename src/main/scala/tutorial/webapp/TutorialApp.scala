@@ -1,25 +1,30 @@
 package tutorial.webapp
 
 // import scala.scalajs.js.annotation.JSExportTopLevel
+import java.net.URL
 
 case class User(
   name: String,
-  online: Boolean = false) {
+  online: Boolean = false
+) {
   override def toString = name
 }
 
-case class Comment(poster: User, body: String) {
+// TODO timestamp required...?
+case class Comment(
+  poster: User,
+  body: String
+) {
   override def toString = s"[${poster}] ${body}"
-  // TODO timestamp required...?
 }
 
-
+// TODO timestamp required...?
 case class Post(
   poster: User,
-  url: String,
+  url: URL,
   title: Option[String],
-  var comments: List[Comment] = List()) {
-  // TODO timestamp required...?
+  var comments: List[Comment] = List()
+) {
   def add (c: Comment): Unit = {
     comments = comments :+ c
   }
@@ -30,7 +35,9 @@ case class Post(
 
 case class Room(
   creator: User,
-  name: String) {
+  name: String
+) {
+
   // members should include only creator for now
   var members: Set[User] = Set(creator)
   // no posts for now
@@ -54,7 +61,9 @@ case class Room(
 case class App(
   var loggedInAs: Option[User] = None,
   var joinedRooms: Set[Room] = Set(),
-  var currentRoom: Option[Room] = None) {
+  var currentRoom: Option[Room] = None
+) {
+
   def logInAs (u: User): Unit = {
     loggedInAs = Some(u)
   }

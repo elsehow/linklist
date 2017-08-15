@@ -1,18 +1,20 @@
 package tutorial.webapp
 
 import utest._
+import java.net.URL
 
 object TutorialTest extends TestSuite {
 
 
   def tests = TestSuite {
 
-    val testUrl = "https://watevs.com"
+    val testUrl = new URL("http://watevs")
 
     val u = new User("nick")
     val c = new Comment(u, "whats good")
     val p = new Post(u, testUrl, Some("Interesting"))
     val r = new Room(u,  "Great links")
+    val a = new App()
 
     'User {
       assert(
@@ -51,8 +53,10 @@ object TutorialTest extends TestSuite {
       )
       // check that title is optional
       val p2 = new Post(u, testUrl, None)
-      assert(p2.url == testUrl)
-      assert(p2.title == None)
+      assert(
+        p2.url == testUrl,
+        p2.title == None
+      )
     }
 
     'Room {
@@ -83,13 +87,13 @@ object TutorialTest extends TestSuite {
       assert(
         r.members == Set(u)
       )
-      // NOTE can't remove the creator of a room?
-      // NOTE can't remove a person who's not in the room?
-      // NOTE can't add a person who's already in the room?
+      // NOTE can't remove the creator of a room????
+      // NOTE error if try to remove a person who's not in the room?
+      // NOTE error if try to add a person who's already in the room?
+      // NOTE must be moderator to remove from room..%coloredlevel.?
     }
 
     'App {
-      val a = new App()
       assert(
         a.loggedInAs == None,
         a.currentRoom == None,
@@ -123,6 +127,8 @@ object TutorialTest extends TestSuite {
       intercept[Exception] { a.logOut() }
       // join room when not logged in (should fail)
       intercept[Exception] { a.join(r) }
+      // leave room when not logged in (should fail)
+      intercept[Exception] { a.leave(r) }
     }
   }
 }
