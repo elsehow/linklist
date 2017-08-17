@@ -9,3 +9,5 @@ scalaVersion := "2.12.2"
 // uTest settings
 libraryDependencies += "com.lihaoyi" %%% "utest" % "0.4.4" % "test"
 testFrameworks += new TestFramework("utest.runner.Framework")
+
+libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.15"
