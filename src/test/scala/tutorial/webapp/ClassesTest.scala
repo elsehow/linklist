@@ -14,7 +14,7 @@ object ClassesTest extends TestSuite {
       assert(
         u.name == "nick",
         u.online == false,
-      )
+        )
     }
 
     'Comment {
@@ -38,7 +38,7 @@ object ClassesTest extends TestSuite {
         l.comments.isEmpty
       )
       // check that title is optional
-      val l2 = new Post(u, testUrl, None)
+      val l2 = new Post(u, testUrl)
       assert(
         l2.url == testUrl,
         l2.title == None
@@ -50,9 +50,8 @@ object ClassesTest extends TestSuite {
     }
 
     'Room {
-      val r = new Room(u,  "Great links")
+      val r = new Room("Great links", Set(u))
       assert(
-        r.creator == u,
         r.name == "Great links",
         // check that members are just u
         r.members == Set(u)

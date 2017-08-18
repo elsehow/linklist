@@ -7,78 +7,140 @@ import tutorial.classes._
 object RoomActionsTest extends TestSuite {
 
   def tests = TestSuite {
-
+    // two users
     val bob = User("bob")
+    val alice = User("alice")
+    // and one "malicious" user
+    // who's not in the room!
+    val mal = User("mallor")
+
     val testUrl = new URL("http://watevs")
+
+    // a comment from each of them
+    val commentBody = "Hmm"
+    val aliceComment = Comment(alice, commentBody)
+    val bobComment = Comment(bob, commentBody)
+    val malComment = Comment(mal, commentBody)
+
+    // a post from each of them
+    val alicePost = Post(alice, testUrl)
+    // bob's post has a comment
+    val bobPost = Post(bob, testUrl, comments=List(aliceComment))
+    val malPost = Post(mal, testUrl)
+
     // bob creates a room
-    val r = Room(bob, "My room")
-    // bob makes a post
-    val p = new Post(bob, testUrl, Some("Interesting"))
-    // and writes a comment for his post (whatever bob)
-    val c = new Comment(bob, "very nice")
-    // (there's also a sneaky user who's *not* a room member)
-    val mallory = User("mallory")
-    // bob adds the post to the room (making a new room)
-    val r2 = RoomActions.addPost(r, p)
+    // and puts his post in it
+    val room = Room("My room",
+                    Set(bob, alice),
+                    List(bobPost))
 
-    'addPost {
-      assert(
-        r2.posts == List(p)
-      )
-      // add another post
-      val p2 = new Post(bob, testUrl, Some("v interesting"))
-      val r3 = RoomActions.addPost(r2, p2)
-      assert(
-        r3.posts == List(p2, p)
-      )
-
-      // someone who is in the room CANNOT add a post
-      val pMal = new Post(mallory, testUrl, Some("hax"))
+    'AddPostAction {
+      // bob can add his own post to room
+      AddPostAction(bob, room, bobPost)
+      // alice can add her own post to room
+      AddPostAction(alice, room, alicePost)
+      // mal cannot add a post, she's not in the room
       intercept[Exception] {
-        RoomActions.addPost(r3, pMal)
+        AddPostAction(mal, room, malPost)
+      }
+      // mal cannot add a post,
+      // even if it's authored by Bob
+      intercept[Exception] {
+        AddPostAction(mal, room, bobPost)
+      }
+      // Bob cannot add a post by Alice
+      intercept[Exception] {
+        AddPostAction(bob, room, alicePost)
+      }
+      // Alice cannot add a post by Bob
+      intercept[Exception] {
+        AddPostAction(alice, room, bobPost)
       }
     }
 
-    'addComment{
-      val r3 = RoomActions.addComment(r2, p, c)
-      assert(
-        r3.posts.head.comments == List(c)
-      )
-
-      // someone who is not in the room CANNOT add a comment
-      val cMal = new Comment(mallory, "hax")
+    'RemovePostAction {
+      // bob can remove his own post from a room
+      RemovePostAction(bob, room, bobPost)
+      // mal cannot delete bob's post -
+      // she's not in the room!
       intercept[Exception] {
-        RoomActions.addComment(r3, p, cMal)
+        RemovePostAction(mal, room, bobPost)
+      }
+      // alice cannot delete bob's post -
+      // she didn't author it!
+      intercept[Exception] {
+        RemovePostAction(alice, room, bobPost)
+      }
+      // bob can't delete a post that's not in the room!
+      intercept[Exception] {
+        val bobPost2 = Post(bob, new URL("http://hi"))
+        RemovePostAction(bob, room, bobPost2)
+      }
+      // NOTE bob can delete alice's post, he is the moderator?
+    }
+
+    'AddCommentAction {
+      // bob can comment on his post
+      AddCommentAction(bob, room, bobPost, bobComment)
+      // alice can comment on bob's post
+      AddCommentAction(alice, room, bobPost, aliceComment)
+      // alice cannot post bob's comment
+      intercept[Exception] {
+        AddCommentAction(alice, room, bobPost, bobComment)
+      }
+      // bob cannot post alice's comment
+      intercept[Exception] {
+        AddCommentAction(bob, room, bobPost, aliceComment)
+      }
+      // bob can't comment on a post that doesn't exist
+      intercept[Exception] {
+        AddCommentAction(bob, room, alicePost, bobComment)
+      }
+      // mal cannot comment on bob's post
+      intercept[Exception] {
+        AddCommentAction(mal, room, bobPost, malComment)
+      }
+      // mal cannot comment on bob's post even with bob's comment
+      intercept[Exception] {
+        AddCommentAction(mal, room, bobPost, bobComment)
       }
     }
 
-    'removePost {
-      val r3 = RoomActions.removePost(r2, bob, p)
-      assert(
-        r3.posts == List()
-      )
-      // somone who did not post the post cannot remove it
+    'RemoveCommentAction {
+      // alice can remove her own comment
+      RemoveCommentAction(alice, room, bobPost, aliceComment)
+      // bob cannot remove alice's comment
       intercept[Exception] {
-        RoomActions.removePost(r2, mallory, p)
+        RemoveCommentAction(bob, room, bobPost, aliceComment)
       }
-      // TODO remove a post that isn't there?
-      // TODO you can ALSO remove a post if you're a moderator
+      // mal cannot remove bob's comment
+      intercept[Exception] {
+        RemoveCommentAction(mal, room, bobPost, aliceComment)
+      }
+      // bob cannot remove a comment that doesn't exist
+      intercept[Exception] {
+        RemoveCommentAction(bob, room, bobPost, bobComment)
+      }
+      // NOTE bob can remove alice's comment, he is the moderator?
     }
 
-    'removeComment{
-      val r3 = RoomActions.addComment(r2, p, c)
-      val r4 = RoomActions.removeComment(r3, bob, p, c)
-      assert(
-        r4.posts.head.comments == List()
-      )
-      // somone who did not post the post cannot remove it
+    'JoinRoomAction {
+      // mal can join the room
+      JoinRoomAction(mal, room)
+      // bob cannot join the room, he is already a member
       intercept[Exception] {
-        RoomActions.removeComment(r3, mallory, p, c)
+        JoinRoomAction(bob, room)
       }
-      // TODO remove a comment that isn't there?
-      // TODO you can ALSO remove a post if you're a moderator
     }
 
+    'LeaveRoomAction {
+      // alice can leave the room
+      LeaveRoomAction(alice, room)
+      // mal cannot leave the room, she is not a member
+      intercept[Exception] {
+        LeaveRoomAction(mal, room)
+      }
+    }
 
   }
 }

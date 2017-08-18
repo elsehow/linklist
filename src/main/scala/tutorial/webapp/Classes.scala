@@ -25,17 +25,15 @@ sealed case class Comment (
 sealed case class Post(
   poster: User,
   url: URL,
-  title: Option[String],
+  title: Option[String] = None,
   comments: List[Comment] = List()
 ) extends Readable
 
 sealed case class Room(
-  creator: User,
   name: String,
+  members: Set[User] = Set(),
   posts: List[Post] = List(),
-) {
-  val members: Set[User] = Set(creator)
-}
+)
 
 sealed case class Notification(
   body: Readable
