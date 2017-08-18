@@ -4,57 +4,77 @@ import tutorial.classes._
 
 abstract class Action {
   val executor: User
+  def validate (ps: List[Boolean]): Unit = {
+    if (ps.exists(_ == false))
+      throw new Exception
+  }
 }
 
-abstract class RoomAction (
-  executor: User,
-  room: Room
-) extends Action
+/*
+ Traits
+ */
 
-// TODO odd that this is an abstract class, while RequiresExistingPost is a trait
+trait RequiresRoomMembership extends Action {
+  val executor: User
+  val room: Room
+  // validators
+  val executorIsRoomMember = room.members contains executor
+  validate(List(executorIsRoomMember))
+}
+
+// TODO odd that this is an abstract class, while everything else is a trait
 abstract class PostingAction (
   executor: User,
   room: Room,
   readable: Readable
-) {
-
+) extends Action
+    with RequiresRoomMembership {
   val executedByAuthor = executor == readable.poster
-  val authorIsMemberOfRoom = (room.members contains executor)
-
-  // TODO this part isn't so dry
-  if (!executedByAuthor || !authorIsMemberOfRoom)
-    throw new Exception
+  validate(List(executedByAuthor))
 }
+
+trait RequiresExistingPost extends PostingAction {
+  val room: Room
+  val post: Post
+  // validators
+  val roomContainsPost = room.posts contains post
+  validate(List(roomContainsPost))
+}
+
+trait RequiresExistingComment extends PostingAction {
+  val post: Post
+  val comment: Comment
+  // validators
+  // TODO almost identical to RequiresExistingPost
+  val postContainsComment = post.comments contains comment 
+  validate(List(postContainsComment))
+}
+
+
+/* Room actions */
+
+case class JoinRoomAction (
+  executor: User,
+  room: Room,
+  ) extends Action {
+  val executorNotInRoom = !(room.members contains executor)
+  validate(List(executorNotInRoom))
+}
+
+case class LeaveRoomAction (
+  executor: User,
+  room: Room,
+  ) extends Action with RequiresRoomMembership {
+  val executorInRoom = (room.members contains executor)
+  validate(List(executorInRoom))
+}
+
 
 case class AddPostAction (
   executor: User,
   room: Room,
   post: Post,
-) extends PostingAction(executor, room, post)
-
-
-// validation traits --------------
-// TODO Not dry with one another
-
-trait RequiresExistingPost {
-  val room: Room
-  val post: Post
-
-  val roomContainsPost = room.posts contains post
-  // TODO this part isn't so dry
-  if (!roomContainsPost)
-    throw new Exception
-}
-trait RequiresExistingComment {
-  val post: Post
-  val comment: Comment
-
-  val postContainsComment = post.comments contains comment
-  // TODO this part isn't so dry
-  if (!postContainsComment)
-    throw new Exception
-}
-// --------------------------------
+  ) extends PostingAction(executor, room, post)
 
 case class RemovePostAction (
   executor: User,
@@ -80,36 +100,14 @@ case class RemoveCommentAction (
     with RequiresExistingPost
     with RequiresExistingComment
 
-case class JoinRoomAction (
-  executor: User,
-  room: Room,
-  ) extends RoomAction(executor, room) {
-  val executorNotInRoom = !(room.members contains executor)
+/* Application actions */
 
-  if (!executorNotInRoom)
-    throw new Exception
-}
+// TODO switchRoom(app, room)
+// - must be a member of the room you're switching to!
+ // TODO joinRoom(app, room)
+ // - call RoomActions.joinRoom
+ // - add to joinedRooms
+ // TODO leaveRoom(app, room)
+ // - opposite of above
+ // TODO notify(app, notification)
 
-case class LeaveRoomAction (
-  executor: User,
-  room: Room,
-  ) extends RoomAction(executor, room) {
-  val executorInRoom = (room.members contains executor)
-  if (!executorInRoom)
-    throw new Exception
-}
-
-
-// }
-
-// object AppActions {
-
-//   // TODO switchRoom(app, room)
-//   // - must be a member of the room you're switching to!
-//   // TODO joinRoom(app, room)
-//   // - call RoomActions.joinRoom
-//   // - add to joinedRooms
-//   // TODO leaveRoom(app, room)
-//   // - opposite of above
-//   // TODO notify(app, notification)
-// }

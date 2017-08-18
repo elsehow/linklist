@@ -15,8 +15,6 @@ sealed abstract class Readable {
   // val timestamp: Int
 }
 
-// type Feed = List[Readable]
-
 sealed case class Comment (
   poster: User,
   body: String
